@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="crates/app/ui/icon.png" width="120" alt="ADM">
+ <img width="1191" height="637" alt="image" src="https://github.com/user-attachments/assets/ed77ab4d-bc17-4ae6-a94d-eed09811b8bd" />
+
 </p>
 
 <h1 align="center">ADM — All Download Manager</h1>
