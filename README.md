@@ -1,6 +1,8 @@
 <p align="center">
  <img width="1191" height="637" alt="image" src="https://github.com/user-attachments/assets/ed77ab4d-bc17-4ae6-a94d-eed09811b8bd" />
 
+ <img width="1333" height="828" alt="image" src="https://github.com/user-attachments/assets/4d544b35-b17e-48f8-a73a-4ebdb4380a67" />
+
 </p>
 
 <p align="center">
@@ -37,13 +39,14 @@
 - **The connection count changes at once**, even while a file downloads, and a connection much slower than the others is made again so the speed stays steady
 - **Resume with integrity** — on restart, the server's `ETag` is compared with the stored one; a changed file clears old parts so nothing corrupt is resumed; a file that changed on the server while it was paused starts again instead of mixing old and new
 - **Big files** — a second bar shows the joining of picture and sound and the moving of the file to its folder, big videos are joined in about half the time, and a folder picked in Download File Info takes the file there at once
-- **Checksum verification** — after a download finishes, the file is hashed (`SHA-256`, `SHA-1`, `MD5`) against a sum from the URL fragment (`#sha256=…`) or a sidecar file (`.sha256` / `.sha1` / `.md5`)
+- **Checksum verification** — after a download finishes, the file is hashed (`SHA-256`, `SHA-1`, `MD5`) against a sum from the URL fragment (`#sha256=…`), the download description, or a sidecar file (`.sha256` / `.sha1` / `.md5`); right-click **Check file (SHA-256)** also compares against any checksum currently copied in your clipboard
 
 ### 📺 Video & Audio
 - **YouTube / generic extractor** — paste a video page, pick quality, ADM fetches the direct streams with `yt-dlp`
-- **Built-in video player** ⭐ — watch a torrent streaming directly from peers inside ADM's own player window (no external program): play, pause, seek (the seek target is fetched first, so skipping is instant), speed, and fullscreen where supported; in-torrent SRT/WebVTT subtitles show via the **CC** control
+- **Built-in video player** ⭐ — watch a torrent streaming directly from peers inside ADM's own player window (no external program): play, pause, seek (the seek target is fetched first, so skipping is instant), episode/file switcher for multi-video torrents, live peer/speed/buffer stats, on-the-fly **Fix Audio (AAC)** transcoding for MKV/AC3/EAC3/DTS surround tracks, in-torrent SRT/WebVTT subtitles via the **CC** control, and automatic cache cleanup on close
+- **Play while downloading** — preview partially downloaded HTTP, HLS, DASH, or BitTorrent videos before they finish (torrent downloads prioritize the first 32 MB and last 16 MB of pieces for fast playback)
 - **DASH (video + audio)** — downloads both streams in parallel, merges with `ffmpeg` into one file
-- **HLS (m3u8)** — joins all segments into a single `.ts` (or `.mp4` when `ffmpeg` is available)
+- **HLS (m3u8)** — joins all segments into a single `.ts` (or `.mp4` when `ffmpeg` is available), including master playlists with separate `#EXT-X-MEDIA:TYPE=AUDIO` audio renditions
 - **Audio-only / MP3** — extract the sound track and encode to MP3 at once, at the quality you pick
 - **Playlists** — a whole playlist at 240p / 144p too
 - **Subtitles** — download a video's subtitles as well (Options ▸ Downloads)
@@ -56,9 +59,9 @@
 |---|---|
 | **HTTP / HTTPS** | Multi-connection, ranges, redirects, cookies, auth, proxy |
 | **FTP / FTPS** | Passive mode, explicit TLS, `REST` resume, single connection |
-| **BitTorrent** | `.torrent` files and magnet links, file selection, seeding limits, uses bundled `aria2c` for downloads and `librqbit` for the built-in streaming player |
+| **BitTorrent** | `.torrent` files and magnet links, file selection, head/tail piece prioritization (`32 MB` / `16 MB`), seeding limits, uses bundled `aria2c` for downloads and `librqbit` for the built-in streaming player |
 
-**Torrents in detail:** a magnet link shows its files first so you can choose them; a `.torrent` link in the browser opens the torrent window at once and a `.torrent` file can be dropped on the window; public trackers find many more people to download from, and the window shows how many are connected and tells you when nobody shares the torrent. **Watch in ADM** streams the selected video straight from the swarm inside ADM's own player window (`librqbit` downloads pieces from peers on demand, with in-torrent SRT/WebVTT subtitles via the CC control) — no external player, no waiting for the whole file.
+**Torrents in detail:** a magnet link shows its files first so you can choose them; a `.torrent` link in the browser opens the torrent window at once and a `.torrent` file can be dropped on the window; public trackers find many more people to download from, and the window shows how many are connected and tells you when nobody shares the torrent. **Watch in ADM** streams the checked video straight from the swarm inside ADM's own player window (`librqbit` downloads pieces from peers on demand, with an episode/file switcher, live peer/speed/buffer stats, on-the-fly AAC audio transcoding, in-torrent SRT/WebVTT subtitles via the CC control, and automatic cache cleanup on close) — no external player, no waiting for the whole file.
 
 ### 🧠 Smart Queue & Scheduler
 - Multiple named queues, each with its own parallelism limit
@@ -129,7 +132,15 @@ cargo build --release
 The one-click build script (Windows PowerShell):
 ```powershell
 .\build-windows.ps1
-# produces ADM-Setup.exe and ADM-Portable\ADM.exe
+# or non-interactive: .\build-windows.ps1 -NoPause
+# produces dist\ADM-Setup.exe, dist\ADM-Portable\ADM.exe, dist\ADM-Portable.zip, and dist\version.json
+```
+
+Running tests:
+```powershell
+cargo test --workspace
+node extension/test/yt-core.test.js
+node extension/test/background.sim.js
 ```
 
 ---
@@ -148,11 +159,11 @@ All settings are stored in `%APPDATA%\ZieDev\ADM\` (or next to the portable exe)
 
 ```
 crates/
-  app/           # Slint UI, system tray, win32 drag-drop, extension bridge
-  engine/        # Core downloader: HTTP, FTP, HLS, DASH, torrent, checksum, host-limits
-extension/       # Browser extension (MV3) — background, content, popup, icons
+  app/           # Slint UI, built-in WebView2 player window, system tray, win32 drag-drop, extension bridge
+  engine/        # Core downloader: HTTP, FTP, HLS, DASH, torrent, live torrent streaming, checksum, host-limits
+extension/       # Browser extension (MV3) — background, content, popup, icons, unit/simulation tests
 installer/       # Inno Setup script (adm.iss), update signing key
-dist/            # Portable package (ADM.exe + extension + tools)
+dist/            # Built installer, portable package, and version.json manifest
 ```
 
 ---
@@ -185,7 +196,7 @@ redistribution. Third-party components remain under their own licenses:
 
 ## Credits
 
-- **Rust crates**: tokio, reqwest, serde, chrono, slint, ring, suppaftp, sha2, sha1, md-5, and many more (MIT / Apache-2.0)
+- **Rust crates**: tokio, reqwest, serde, chrono, slint, librqbit, wry, winit, ring, suppaftp, sha2, sha1, md-5, and many more (MIT / Apache-2.0)
 - **External tools** (bundled, verified at runtime):
   - `yt-dlp` — video extraction (Unlicense)
   - `aria2c` — BitTorrent (GPL-2.0+)
